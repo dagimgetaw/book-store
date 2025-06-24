@@ -4,10 +4,12 @@ import { Outlet } from "react-router-dom";
 
 export default function MainLayout() {
   return (
-    <>
+    <div className="hide-scrollbar min-h-screen w-full">
       <Navbar />
-      <Outlet />
+      <main className="hide-scrollbar">
+        <Outlet />
+      </main>
       <Footer />
-    </>
+    </div>
   );
 }
