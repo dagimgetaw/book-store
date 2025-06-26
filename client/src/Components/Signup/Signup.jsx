@@ -6,6 +6,8 @@ import { useFormik } from "formik";
 import { signupSchema } from "../../Schema/Schema";
 import logo from "../../assets/google.png";
 import Loading from "../Loading/Loading";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const { theme } = useStore();
@@ -20,38 +22,50 @@ export default function Signup() {
     specialTest: false,
   });
   const [confirmPasswordMatch, setConfirmPasswordMatch] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const navigate = useNavigate();
 
   const formik = useFormik({
     initialValues: {
       fullName: "",
       email: "",
+      phoneNumber: "",
       password: "",
       confirmPassword: "",
     },
     validationSchema: signupSchema,
-    onSubmit: async (values, { setSubmitting }) => {
+    onSubmit: async (values) => {
+      setIsSubmitting(true);
+      setErrorMessage("");
       try {
-        // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        console.log(values);
-        setSubmitting(false);
+        await axios.post("http://localhost:5500/api/v1/auth/sign-up", values);
+
+        setTimeout(() => {
+          formik.resetForm();
+          navigate("/sign-in");
+        }, 2000);
+
+        setIsSubmitting(false);
       } catch (error) {
-        setErrorMessage(error.message);
-        setSubmitting(false);
+        let msg = "Signup failed. Please try again.";
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
+          msg = error.response.data.message;
+        }
+        setErrorMessage(msg);
+        setIsSubmitting(false);
       }
     },
   });
 
-  const {
-    values,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    errors,
-    touched,
-    isSubmitting,
-  } = formik;
+  const { values, handleChange, handleBlur, handleSubmit, errors, touched } =
+    formik;
 
   // Password validation checks
   useEffect(() => {
@@ -101,17 +115,21 @@ export default function Signup() {
         </h2>
 
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-rose-100 text-rose-700 text-sm text-center">
             {errorMessage}
           </div>
         )}
 
-        <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+        <form
+          className="space-y-3 md:space-y-6"
+          onSubmit={handleSubmit}
+          autoComplete="off"
+        >
           {/* Full Name Field */}
           <div>
             <label className="block text-sm font-medium mb-1">Full Name</label>
             <div
-              className={`flex items-center rounded-lg border px-3 py-2 ${
+              className={`flex items-center rounded-lg border px-3 py-3 ${
                 errors.fullName && touched.fullName
                   ? "border-rose-500"
                   : theme === "light"
@@ -119,11 +137,11 @@ export default function Signup() {
                   : "border-gray-300"
               } ${theme === "light" ? "bg-gray-700" : "bg-gray-100"}`}
             >
-              <User className="w-5 h-5 mr-2" />
+              <User className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               <input
                 name="fullName"
                 type="text"
-                className={`w-full bg-transparent outline-none text-sm ${
+                className={`w-full bg-transparent outline-none text-xs md:text-sm ${
                   theme === "light"
                     ? "placeholder-gray-400"
                     : "placeholder-gray-500"
@@ -135,7 +153,9 @@ export default function Signup() {
               />
             </div>
             {errors.fullName && touched.fullName && (
-              <p className="mt-1 text-sm text-rose-500">{errors.fullName}</p>
+              <p className="mt-1 text-xs md:text-sm text-rose-500">
+                {errors.fullName}
+              </p>
             )}
           </div>
 
@@ -143,7 +163,7 @@ export default function Signup() {
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <div
-              className={`flex items-center rounded-lg border px-3 py-2 ${
+              className={`flex items-center rounded-lg border px-3 py-3 ${
                 errors.email && touched.email
                   ? "border-rose-500"
                   : theme === "light"
@@ -151,11 +171,11 @@ export default function Signup() {
                   : "border-gray-300"
               } ${theme === "light" ? "bg-gray-700" : "bg-gray-100"}`}
             >
-              <Mail className="w-5 h-5 mr-2" />
+              <Mail className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               <input
                 name="email"
                 type="email"
-                className={`w-full bg-transparent outline-none text-sm ${
+                className={`w-full bg-transparent outline-none text-xs md:text-sm ${
                   theme === "light"
                     ? "placeholder-gray-400"
                     : "placeholder-gray-500"
@@ -167,7 +187,9 @@ export default function Signup() {
               />
             </div>
             {errors.email && touched.email && (
-              <p className="mt-1 text-sm text-rose-500">{errors.email}</p>
+              <p className="mt-1 text-xs md:text-sm text-rose-500">
+                {errors.email}
+              </p>
             )}
           </div>
 
@@ -175,7 +197,7 @@ export default function Signup() {
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
             <div
-              className={`flex items-center rounded-lg border px-3 py-2 ${
+              className={`flex items-center rounded-lg border px-3 py-3 ${
                 errors.password && touched.password
                   ? "border-rose-500"
                   : theme === "light"
@@ -183,11 +205,11 @@ export default function Signup() {
                   : "border-gray-300"
               } ${theme === "light" ? "bg-gray-700" : "bg-gray-100"}`}
             >
-              <Lock className="w-5 h-5 mr-2" />
+              <Lock className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               <input
                 name="password"
                 type={hide ? "password" : "text"}
-                className={`w-full bg-transparent outline-none text-sm ${
+                className={`w-full bg-transparent outline-none text-xs md:text-sm ${
                   theme === "light"
                     ? "placeholder-gray-400"
                     : "placeholder-gray-500"
@@ -203,18 +225,20 @@ export default function Signup() {
                 className="ml-2 focus:outline-none"
               >
                 {hide ? (
-                  <EyeClosed className="w-5 h-5 cursor-pointer" />
+                  <EyeClosed className="w-4 h-4 md:w-5 md:h-5 cursor-pointer" />
                 ) : (
-                  <Eye className="w-5 h-5 cursor-pointer" />
+                  <Eye className="w-4 h-4 md:w-5 md:h-5 cursor-pointer" />
                 )}
               </button>
             </div>
             {errors.password && touched.password && (
-              <p className="mt-1 text-sm text-rose-500">{errors.password}</p>
+              <p className="mt-1 text-xs md:text-sm text-rose-500">
+                {errors.password}
+              </p>
             )}
 
             {values.password && !allTestsPassed && !confirmPasswordMatch && (
-              <div className="mt-2 text-xs">
+              <div className="mt-2 ml-2 text-xs">
                 <p className="mb-1">Password must contain:</p>
                 <ul className="space-y-1">
                   <li
@@ -283,7 +307,7 @@ export default function Signup() {
               Confirm Password
             </label>
             <div
-              className={`flex items-center rounded-lg border px-3 py-2 ${
+              className={`flex items-center rounded-lg border px-3 py-3 ${
                 errors.confirmPassword && touched.confirmPassword
                   ? "border-rose-500"
                   : theme === "light"
@@ -291,11 +315,11 @@ export default function Signup() {
                   : "border-gray-300"
               } ${theme === "light" ? "bg-gray-700" : "bg-gray-100"}`}
             >
-              <Lock className="w-5 h-5 mr-2" />
+              <Lock className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               <input
                 name="confirmPassword"
                 type={hideConfirm ? "password" : "text"}
-                className={`w-full bg-transparent outline-none text-sm ${
+                className={`w-full bg-transparent outline-none text-xs md:text-sm ${
                   theme === "light"
                     ? "placeholder-gray-400"
                     : "placeholder-gray-500"
@@ -311,14 +335,14 @@ export default function Signup() {
                 className="ml-2 focus:outline-none"
               >
                 {hideConfirm ? (
-                  <EyeClosed className="w-5 h-5 cursor-pointer" />
+                  <EyeClosed className="w-4 h-4 md:w-5 md:h-5 cursor-pointer" />
                 ) : (
-                  <Eye className="w-5 h-5 cursor-pointer" />
+                  <Eye className="w-4 h-4 md:w-5 md:h-5 cursor-pointer" />
                 )}
               </button>
             </div>
             {errors.confirmPassword && touched.confirmPassword && (
-              <p className="mt-1 text-sm text-rose-500">
+              <p className="mt-1 text-xs md:text-sm text-rose-500">
                 {errors.confirmPassword}
               </p>
             )}
@@ -334,7 +358,7 @@ export default function Signup() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full py-3 px-4 rounded-lg font-base transition-colors ${
+            className={`w-full py-3 px-4 mt-10 rounded-lg text-xs md:text-sm transition-colors ${
               theme === "light"
                 ? "bg-indigo-600 hover:bg-indigo-700 text-white"
                 : "bg-indigo-500 hover:bg-indigo-600 text-white"
@@ -361,7 +385,7 @@ export default function Signup() {
                 }`}
               ></div>
             </div>
-            <div className="relative flex justify-center text-sm">
+            <div className="relative flex justify-center text-xs md:text-sm">
               <span
                 className={`px-2 ${
                   theme === "light"
@@ -377,20 +401,24 @@ export default function Signup() {
           {/* Continue with Google Button */}
           <button
             type="button"
-            className={`w-full py-3 px-4 rounded-lg font-medium flex items-center cursor-pointer justify-center gap-3 border transition-colors mb-4 ${
+            className={`w-full py-3 px-4 rounded-lg text-xs md:text-sm flex items-center cursor-pointer justify-center gap-3 border transition-colors mb-4 ${
               theme === "light"
                 ? "bg-gray-700 border-gray-600 hover:bg-gray-600 text-white"
                 : "bg-white border-gray-300 hover:bg-gray-50 text-gray-700"
             }`}
           >
-            <img src={logo} alt="google logo" className="w-5 h-5" />
+            <img
+              src={logo}
+              alt="google logo"
+              className="w-4 h-4 md:w-5 md:h-5"
+            />
             Continue with Google
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-10 md:mt-6 text-center">
           <p
-            className={`text-sm ${
+            className={`text-xs md:text-sm ${
               theme === "light" ? "text-gray-400" : "text-gray-600"
             }`}
           >
